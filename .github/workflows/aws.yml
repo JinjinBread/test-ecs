@@ -28,12 +28,13 @@ name: Deploy to Amazon ECS
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "prod", "staging" ]
 
 env:
   AWS_REGION: ap-northeast-2                   # set this to your preferred AWS region, e.g. us-west-1
   ECR_REPOSITORY: my-ecs-test/ecr         # set this to your Amazon ECR repository name
-  ECS_SERVICE: test-service                 # set this to your Amazon ECS service name
+  ECS_PROD_SERVICE: tickit-prod-service                 # set this to your Amazon ECS service name
+  ECS_STAG_SERVICE: tickit-stag-service                 # set this to your Amazon ECS service name
   ECS_CLUSTER: test-cluster                 # set this to your Amazon ECS cluster name
   ECS_TASK_DEFINITION: test-td-revision1.json # set this to the path to your Amazon ECS task definition
                                                # file, e.g. .aws/task-definition.json
@@ -47,7 +48,6 @@ jobs:
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
-    environment: production
 
     steps:
     - name: Checkout
@@ -101,6 +101,6 @@ jobs:
       uses: aws-actions/amazon-ecs-deploy-task-definition@v2
       with:
         task-definition: ${{ steps.task-def.outputs.task-definition }}
-        service: ${{ env.ECS_SERVICE }}
+        service: ${{ github.ref == 'refs/heads/main' && env.ECS_PROD_SERVICE || env.ECS_STAG_SERVICE }}
         cluster: ${{ env.ECS_CLUSTER }}
         wait-for-service-stability: true
